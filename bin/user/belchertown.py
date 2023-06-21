@@ -1065,6 +1065,14 @@ class getData(SearchList):
             forecast_api_secret = self.generator.skin_dict["Extras"][
                 "forecast_api_secret"
             ]
+            
+            if self.generator.skin_dict["Extras"]["forecast_weatherflow_enabled"] == "1"
+                forecast_weatherflow_secret = self.generator.skin_dict["Extras"]["forecast_weatherflow_secret"]
+                forecast_weatherflow_stationid = self.generator.skin_dict["Extras"]["forecast_weatherflow_stationid"]
+            else
+                forecast_weatherflow_secret = None
+                forecast_weatherflow_stationid = None
+            
             forecast_units = self.generator.skin_dict["Extras"][
                 "forecast_units"
             ].lower()
@@ -1073,6 +1081,16 @@ class getData(SearchList):
             forecast_stale_timer = self.generator.skin_dict["Extras"]["forecast_stale"]
             forecast_is_stale = False
 
+            def weatherflow_iconpath(icon):
+                if icon:
+                    return "https://tempestwx.com/images/Updated/" . icon . ".svg"
+                return ""
+
+            def weatherflow_translate_condition(condition):
+                if condition:
+                    return label_dict[condition]
+                return ""
+                    
             def aeris_coded_weather(data):
                 # https://www.aerisweather.com/support/docs/api/reference/weather-codes/
                 output = ""
@@ -1228,6 +1246,12 @@ class getData(SearchList):
                     forecast_api_secret,
                 )
 
+            if forecast_weatherflow_secrect and forecast_weatherflow_stationid:
+                forecast_weatherflow_url = "https://swd.weatherflow.com/swd/rest/better_forecast?station_id=%s&token=%s&units_temp=c&units_wind=kts&units_pressure=mb&units_precip=mm&units_distance=km" % (
+                    forecast_weatherflow_stationid,
+                    forecast_weatherflow_secrect,
+                )
+
             # Determine if the file exists and get it's modified time, enhanced
             # for 1 hr forecast to load close to the hour
             if os.path.isfile(forecast_file):
@@ -1249,6 +1273,7 @@ class getData(SearchList):
             # File is stale, download a new copy
             if forecast_is_stale:
                 try:
+                    last_url = None
                     if sys.version_info[0] >= 3:
                         from urllib.request import Request, urlopen
                     else:
@@ -1263,32 +1288,38 @@ class getData(SearchList):
                         dev_forecast_file = self.generator.skin_dict["Extras"][
                             "forecast_dev_file"
                         ]
+                        last_url = dev_forecast_file
                         req = Request(dev_forecast_file, None, headers)
                         response = urlopen(req)
                         forecast_file_result = response.read()
                         response.close()
                     else:
                         # Current conditions
+                        last_url = forecast_current_url
                         req = Request(forecast_current_url, None, headers)
                         response = urlopen(req)
                         current_page = response.read()
                         response.close()
                         # 24hr forecast (was Forecast)
+                        last_url = forecast_24hr_url
                         req = Request(forecast_24hr_url, None, headers)
                         response = urlopen(req)
                         forecast_24hr_page = response.read()
                         response.close()
                         # 3hr forecast
+                        last_url = forecast_3hr_url
                         req = Request(forecast_3hr_url, None, headers)
                         response = urlopen(req)
                         forecast_3hr_page = response.read()
                         response.close()
                         # 1hr forecast
+                        last_url = forecast_1hr_url
                         req = Request(forecast_1hr_url, None, headers)
                         response = urlopen(req)
                         forecast_1hr_page = response.read()
                         response.close()
                         # AQI
+                        last_url = aqi_url
                         req = Request(aqi_url, None, headers)
                         response = urlopen(req)
                         aqi_page = response.read()
@@ -1298,103 +1329,78 @@ class getData(SearchList):
                             == "1"
                         ):
                             # Alerts
+                            last_url = forecast_alerts_url
                             req = Request(forecast_alerts_url, None, headers)
                             response = urlopen(req)
                             alerts_page = response.read()
                             response.close()
-
-                        # Combine all into 1 file
-                        if (
-                            self.generator.skin_dict["Extras"]["forecast_alert_enabled"]
-                            == "1"
-                        ):
-                            try:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [json.loads(current_page)],
-                                        "forecast_24hr": [
-                                            json.loads(forecast_24hr_page)
-                                        ],
-                                        "forecast_3hr": [json.loads(forecast_3hr_page)],
-                                        "forecast_1hr": [json.loads(forecast_1hr_page)],
-                                        "alerts": [json.loads(alerts_page)],
-                                        "aqi": [json.loads(aqi_page)],
-                                    }
-                                )
-                            except:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [
-                                            json.loads(current_page.decode("utf-8"))
-                                        ],
-                                        "forecast_24hr": [
-                                            json.loads(
-                                                forecast_24hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_3hr": [
-                                            json.loads(
-                                                forecast_3hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_1hr": [
-                                            json.loads(
-                                                forecast_1hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "alerts": [
-                                            json.loads(alerts_page.decode("utf-8"))
-                                        ],
-                                        "aqi": [json.loads(aqi_page.decode("utf-8"))],
-                                    }
-                                )
                         else:
-                            try:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [json.loads(current_page)],
-                                        "forecast_24hr": [
-                                            json.loads(forecast_24hr_page)
-                                        ],
-                                        "forecast_3hr": [json.loads(forecast_3hr_page)],
-                                        "forecast_1hr": [json.loads(forecast_1hr_page)],
-                                        "aqi": [json.loads(aqi_page)],
-                                    }
-                                )
-                            except:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [
-                                            json.loads(current_page.decode("utf-8"))
-                                        ],
-                                        "forecast_24hr": [
-                                            json.loads(
-                                                forecast_24hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_3hr": [
-                                            json.loads(
-                                                forecast_3hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_1hr": [
-                                            json.loads(
-                                                forecast_1hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "aqi": [json.loads(aqi_page.decode("utf-8"))],
-                                    }
-                                )
+                            alerts_page = "{}"
+
+                        if forecast_weatherflow_url:
+                            last_url = forecast_weatherflow_url
+                            req = Request(forecast_weatherflow_url, None, headers)
+                            response = urlopen(req)
+                            weatherflow_page = response.read()
+                            response.close()
+                        else:
+                            weatherflow_page = "{}"
+                            
+                        # Combine all into 1 file
+                        try:
+                            forecast_file_result = json.dumps(
+                                {
+                                    "timestamp": int(time.time()),
+                                    "current": [json.loads(current_page)],
+                                    "forecast_24hr": [
+                                        json.loads(forecast_24hr_page)
+                                    ],
+                                    "forecast_3hr": [json.loads(forecast_3hr_page)],
+                                    "forecast_1hr": [json.loads(forecast_1hr_page)],
+                                    "alerts": [json.loads(alerts_page)],
+                                    "aqi": [json.loads(aqi_page)],
+                                    "weatherflow": [json.loads(weatherflow_page)],
+                                }
+                            )
+                        except:
+                            forecast_file_result = json.dumps(
+                                {
+                                    "timestamp": int(time.time()),
+                                    "current": [
+                                        json.loads(current_page.decode("utf-8"))
+                                    ],
+                                    "forecast_24hr": [
+                                        json.loads(
+                                            forecast_24hr_page.decode("utf-8")
+                                        )
+                                    ],
+                                    "forecast_3hr": [
+                                        json.loads(
+                                            forecast_3hr_page.decode("utf-8")
+                                        )
+                                    ],
+                                    "forecast_1hr": [
+                                        json.loads(
+                                            forecast_1hr_page.decode("utf-8")
+                                        )
+                                    ],
+                                    "alerts": [
+                                        json.loads(alerts_page.decode("utf-8"))
+                                    ],
+                                    "aqi": [
+                                        json.loads(aqi_page.decode("utf-8"))
+                                    ],
+                                    "weatherflow": [
+                                        json.loads(weatherflow_page).decode("utf-8")
+                                    ],
+                                }
+                            )                        
                 except Exception as error:
                     raise Warning(
                         "Error downloading forecast data. "
                         "Check the URL in your configuration and try again. "
                         "You are trying to use URL: %s, and the error is: %s"
-                        % (forecast_24hr_url, error)
+                        % (last_url, error)
                     )
 
                 # Save forecast data to file. w+ creates the file if it doesn't
