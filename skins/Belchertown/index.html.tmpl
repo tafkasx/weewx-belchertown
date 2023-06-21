@@ -432,7 +432,9 @@
                     </div>
                     <div class="col-lg-4 forecast-menu">
                         $obs.label.forecast_interval_caption <div class="forecast-button" onclick="forecast_select(1);" id="button1">1</div>
+                        #if !$Extras.has_key("forecast_weatherflow_stationid")
                         <div class="forecast-button" onclick="forecast_select(3);" id="button3">3</div>
+                        #end if
                         <div class="forecast-button" onclick="forecast_select(24);" id="button24">24</div>
                     </div>
                         

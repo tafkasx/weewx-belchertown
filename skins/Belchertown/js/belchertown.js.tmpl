@@ -1160,7 +1160,7 @@ function update_forecast_data(data) {
         jQuery(".forecastrow").hide();
         belchertown_debug("Forecast: No provider, hiding forecastrow");
         return;
-    } else if (forecast_provider == "aeris") {
+    } else if (forecast_provider in ("aeris","weatherflow") {
         var forecast_subtitle = tzAdjustedMoment(data["timestamp"]).format('$obs.label.time_forecast_last_updated');
 
         try {

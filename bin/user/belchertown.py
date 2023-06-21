@@ -1471,7 +1471,13 @@ class getData(SearchList):
             else:
                 aqi_category = label_dict["aqi_unknown"]
 
-            if (
+            # if weatherflow api is used ignore aeris data
+            if "current_conditions" in data["weatherflow"]
+                current_obs_summary = weatherflow_translate_condition(data["weatherflow"]["current_conditions"]["conditions"])
+                current_obs_icon = weatherflow_iconpath(data["weatherflow"]["current_conditions"]["icon"])
+                visibility = "N/A"
+                visibility_unit = ""
+            elif (
                 len(data["current"][0]["response"]) > 0
                 and self.generator.skin_dict["Extras"]["forecast_aeris_use_metar"]
                 == "0"
