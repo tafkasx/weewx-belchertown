@@ -1416,10 +1416,20 @@ function update_forecast_data(data) {
                     #elif $Extras.has_key("forecast_show_humidity_dewpoint") and $Extras.forecast_show_humidity_dewpoint == '2'
                     output_html += '<div><i class="wi wi-raindrops rain-precip"></i> <span>' + parseFloat(forecast_row[i]["dewPoint"]).toFixed(0) + '&deg;</span></div>';
                     #end if
+                    #if $Extras.forecast_provider == "aeris"
                     if (forecast_row[i]["snow_depth"] > 0) {
+                        var snow_depth = forecast_row[i]["snow_depth"];
+                        var snow_unit = forecast_row[i]["snow_unit"];
+                    #else if $Extras.forecast_provider == "weatherflow"
+                    if (forecast_row[i]["precip_type"] == "snow") {
+                        var snow_depth = forecast_row[i]["precip"];
+                        var snow_unit = data["units"]["units_precip"];
+                    #else
+                    if (0) {
+                    #end if
                         output_html += '<div class="snow-precip">';
                         // output_html += '<img src="'+get_relative_url()+'/images/snowflake-icon-15px.png"> <span>';
-                        output_html += '<img src="' + get_relative_url() + '/images/snowflake-icon-15px.png"> <span>' + parseFloat(forecast_row[i]["snow_depth"]).toFixed(0) + '<span> ' + forecast_row[i]["snow_unit"];
+                        output_html += '<img src="' + get_relative_url() + '/images/snowflake-icon-15px.png"> <span>' + parseFloat(snow_depth).toFixed(0) + '<span> ' + snow_unit;
                         output_html += '</div>';
                     } else if (forecast_row[i]["precip"] > 0) {
                         output_html += '<i class="wi wi-raindrop wi-rotate-45 rain-precip"></i> <span>' + parseFloat(forecast_row[i]["precip"]).toFixed(0) + '%</span>';
@@ -1431,7 +1441,7 @@ function update_forecast_data(data) {
                     output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '</span>';
                     //  output_html += '<i class="wi wi-strong-wind"></i> <span>'+ parseFloat( forecast_row[i]["windSpeed"] ).toFixed(0) +'</span> | <span> '+ parseFloat( forecast_row[i]["windGust"] ).toFixed(0) +'$unit.label.windSpeed';        
                     output_html += '</div>';
-                    #if $Extras.has_key("forecast_show_daily_forecast_link") and $Extras.forecast_show_daily_forecast_link == '1'
+                    #if $Extras.forecast_provider == "aeris" and $Extras.has_key("forecast_show_daily_forecast_link") and $Extras.forecast_show_daily_forecast_link == '1'
                     output_html += forecast_row[i]["forecast_link"];
                     #end if
                     output_html += '</div>';
@@ -1468,6 +1478,7 @@ function update_forecast_data(data) {
                     #elif $Extras.has_key("forecast_show_humidity_dewpoint") and $Extras.forecast_show_humidity_dewpoint == '2'
                     output_html += '<i class="wi wi-raindrops rain-precip"></i> <span>' + parseFloat(forecast_row[i]["dewPoint"]).toFixed(0) + '&deg;</span> | ';
                     #end if
+                    #TODO: take care of differences for aeris and weatherflow (e.g. WF no percip for daily, but icon))               
                     if (forecast_row[i]["snow_depth"] > 0) {
                         output_html += '<div class="snow-precip">';
                         output_html += '<img src="' + get_relative_url() + '/images/snowflake-icon-15px.png"> <span>' + parseFloat(forecast_row[i]["snow_depth"]).toFixed(0) + '<span> ' + forecast_row[i]["snow_unit"];
@@ -1481,7 +1492,7 @@ function update_forecast_data(data) {
                     output_html += '<div class="forecast-wind">';
                     output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '</span> | <span> ' + parseFloat(forecast_row[i]["windGust"]).toFixed(0) + '$unit.label.windSpeed';
                     output_html += '</div>';
-                    #if $Extras.has_key("forecast_show_daily_forecast_link") and $Extras.forecast_show_daily_forecast_link == '1'
+                    #if $Extras.forecast_provider == "aeris" and $Extras.has_key("forecast_show_daily_forecast_link") and $Extras.forecast_show_daily_forecast_link == '1'
                     output_html += forecast_row[i]["forecast_link"];
                     #end if
                     output_html += '</div>';

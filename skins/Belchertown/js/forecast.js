@@ -34,7 +34,7 @@ function queryForecast(forecast_interval, key, n = 0) {
                 return data[(forecast_interval)][0]["response"][0]["periods"][i]["minTempF"];
             }
             #end if
-            $isWF(return data[(forecast_interval)][n]["air_temp_low"];)
+            $isWF(return data["forecast"][(forecast_interval)][n]["air_temp_low"];)
         case 'maxTemp':
             #if $Extras.forecast_provider == "aeris"
             if (("$Extras.forecast_units" == "ca") || ("$Extras.forecast_units" == "uk2") || ("$Extras.forecast_units" == "si")) {
@@ -44,7 +44,7 @@ function queryForecast(forecast_interval, key, n = 0) {
                 return data[(forecast_interval)][0]["response"][0]["periods"][i]["maxTempF"];
             }
             #end if
-            $isWF(return data[(forecast_interval)][n]["air_temp_high"];)
+            $isWF(return data["forecast"][(forecast_interval)][n]["air_temp_high"];)
         case 'avgTemp':
             #if $Extras.forecast_provider == "aeris"
             if (("$Extras.forecast_units" == "ca") || ("$Extras.forecast_units" == "uk2") || ("$Extras.forecast_units" == "si")) {
@@ -55,7 +55,7 @@ function queryForecast(forecast_interval, key, n = 0) {
             }
             #end if
             ##TODO: not available for daily weatherflow data, but needed for some calculations later. giving it a try...
-            $isWF(if (forecast_interval == "hourly") {return data[(forecast_interval)][n]["air_temperature"]} else {return (data[(forecast_interval)][n]["air_temp_low"] + data[(forecast_interval)][n]["air_temp_high"]) / 2;})
+            $isWF(if (forecast_interval == "hourly") {return data["forecast"][(forecast_interval)][n]["air_temperature"]} else {return (data[(forecast_interval)][n]["air_temp_low"] + data[(forecast_interval)][n]["air_temp_high"]) / 2;})
         case 'dewPoint':
             #if $Extras.forecast_provider == "aeris"
             if (("$Extras.forecast_units" == "ca") || ("$Extras.forecast_units" == "uk2") || ("$Extras.forecast_units" == "si")) {
@@ -65,7 +65,7 @@ function queryForecast(forecast_interval, key, n = 0) {
                 return data[(forecast_interval)][0]["response"][0]["periods"][i]["dewpointF"];
             }
             #end if
-            $isWF(return "";)
+            return "";
         case 'windSpeed':
             #if $Extras.forecast_provider == "aeris"
             if ("$unit.unit_type.windSpeed" == "knot") {
@@ -83,7 +83,7 @@ function queryForecast(forecast_interval, key, n = 0) {
                 return data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedMPH"];
             }
             #end if
-            $isWF(return data[(forecast_interval)][n]["wind_avg"];)
+            $isWF(return data["forecast"][(forecast_interval)][n]["wind_avg"];)
         case 'windGust':
             #if $Extras.forecast_provider == "aeris"
             if ("$unit.unit_type.windSpeed" == "knot") {
@@ -102,21 +102,21 @@ function queryForecast(forecast_interval, key, n = 0) {
                 return data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustMPH"];
             }
             #end if
-            $isWF(return data[(forecast_interval)][n]["wind_gust"];)
+            $isWF(return data["forecast"][(forecast_interval)][n]["wind_gust"];)
         case "precipProbability":
             #*As per API specification, "pop" is either a number from 0 to
                 100 or null. We convert to 0 in the second case.
                 *#
             $isAeris(return data[(forecast_interval)][0]["response"][0]["periods"][i]["pop"] || 0;)
-            $isWF(return data[(forecast_interval)][n]["precip_probability"];)
+            $isWF(return data["forecast"][(forecast_interval)][n]["precip_probability"];)
         case "humidity":
             $isAeris(data[(forecast_interval)][0]["response"][0]["periods"][i]["humidity"];)
-            $isWF(if (forecast_interval == "hourly") {return data[(forecast_interval)][n]["relative_humidity"]} else {return "";})
+            $isWF(if (forecast_interval == "hourly") {return data["forecast"][(forecast_interval)][n]["relative_humidity"]} else {return "";})
         case "precipType":
-            $isWF(return data[(forecast_interval)][n]["precip_type"]);
+            $isWF(return data["forecast"][(forecast_interval)][n]["precip_type"]);
             return;
         case "precipImage":
-            $isWF(return weatherflow_iconpath(data[(forecast_interval)][n]["precip_icon"]));
+            $isWF(return weatherflow_iconpath(data["forecast"][(forecast_interval)][n]["precip_icon"]));
             return;
     }
 }
