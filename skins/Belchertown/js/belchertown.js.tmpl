@@ -739,11 +739,13 @@ function moon_icon(moonphase){
 function ajaxforecast() {
     forecast_data = {};
     jQuery.when(
+        #if $Extras.has_key("forecast_provider") and $Extras.forecast_provider == "aeris"
         // Get the iconlist - original source is // https://www.aerisweather.com/support/docs/api/reference/icon-list/
         jQuery.getJSON(get_relative_url() + '/images/aeris-icon-list.json', function(iconlist) {
         icon_dict = iconlist;
             }
         ),
+        #end if
         // Get the forecast
         jQuery.getJSON(get_relative_url() + "/json/forecast.json", function(forecast) {
         forecast_data = forecast;
@@ -1067,6 +1069,29 @@ function aeris_icon(data) {
         return icon_out;
 }
 
+function weatherflow_iconpath(icon) {
+    if ( icon ) {
+        return "https://tempestwx.com/images/Updated/" + icon + ".svg";
+    }
+    return "";
+}
+
+var label_dict = {
+    #for item in $obs.label.items()
+        $item.replace(" ","_").lower(): "$item+",
+    #end if
+  };
+  
+function weatherflow_translate_condition(condition) {
+    if ( condition ) {
+        var key = condition.replace(' ','_').toLowerCase();
+        if (key in label_dict) {
+            return label_dict[key];
+        }
+    }
+    return "";
+}
+
 function show_forcast_alert(data, forecast_provider) {
     belchertown_debug("Forecast: Updating alert data for " + forecast_provider);
     var i, forecast_alert_modal, forecast_alerts;
@@ -1163,19 +1188,24 @@ function update_forecast_data(data) {
     } else if (forecast_provider in ("aeris","weatherflow") {
         var forecast_subtitle = tzAdjustedMoment(data["timestamp"]).format('$obs.label.time_forecast_last_updated');
 
-        try {
-            var wxicon = get_relative_url() + "/images/" + aeris_icon(data["current"][0]["response"]["ob"]["icon"]) + ".png";
-        } catch (err) {
-            // Returned "current" data does not have this value
-        }
-        
-        // Current observation text
-        try {
-            jQuery(".current-obs-text").html(aeris_coded_weather(data["current"][0]["response"]["ob"]["weatherPrimaryCoded"], true));
-        } catch (err) {
-            // Returned "current" data does not have this value
-        }
+        if (forecast_provider == "aeris") {
+            try {
+                var wxicon = get_relative_url() + "/images/" + aeris_icon(data["current"][0]["response"]["ob"]["icon"]) + ".png";
+            } catch (err) {
+                // Returned "current" data does not have this value
+            }
 
+            // Current observation text
+            try {
+                jQuery(".current-obs-text").html(aeris_coded_weather(data["current"][0]["response"]["ob"]["weatherPrimaryCoded"], true));
+            } catch (err) {
+                // Returned "current" data does not have this value
+            }
+        }
+        else if (forecast_provider == "weatherflow") {
+            var wxicon = weatherflow_iconpath(data["current_conditions"]["icon"]);
+            jQuery(".current-obs-text").html((weatherflow_translate_condition(data["current_conditions"]["conditions"]), true));
+        }
         
         // AQI
         if (data["aqi"][0]["success"] && !data["aqi"][0]["error"]) {
@@ -1222,41 +1252,39 @@ function update_forecast_data(data) {
         }
 
         //  start of new composite version of forecast code
+        var forecast_types = [];
+        var forecast_interval;
+        var data_fc = data;
 
-        var forecast_types = ["forecast_1hr", "forecast_3hr", "forecast_24hr"];
-        var forecast_interval
+        #if $Extras.forecast_provider == "aeris"
+        forecast_types = ["forecast_1hr", "forecast_3hr", "forecast_24hr"];
+        #else if $Extras.forecast_provider == "weatherflow"
+        forecast_types = ["hourly", "daily"];
+        #endif
+
         for (forecast_interval of forecast_types) {
             var forecast_row = [];
             var output_html = "";
-            for (i = 0; i < data[(forecast_interval)][0]["response"][0]["periods"].length; i++) {
+            var numberOfForecasts = queryForecast(forecast_interval, "numberOfForecasts");
+            for (i = 0; i < numberOfForecasts; i++) {
 
                 //  for 24hr interval add 7200 (2 hours) to the epoch to get an hour well into the day to avoid any DST issues. This way it'll either be 1am or 2am. Without it, we get 12am or 11pm (the previous day).
-                if (forecast_interval == "forecast_24hr") {
-                    var image_url = get_relative_url() + "/images/" + aeris_icon(data[(forecast_interval)][0]["response"][0]["periods"][i]["icon"]) + ".png";
-                    var condition_text = aeris_coded_weather(data[(forecast_interval)][0]["response"][0]["periods"][i]["weatherPrimaryCoded"], false);
-                    var weekday = tzAdjustedMoment(data[(forecast_interval)][0]["response"][0]["periods"][i]["timestamp"] + 7200).format("$obs.label.time_forecast_date");
+                if (forecast_interval in ("forecast_24hr","daily") {
+                    var weekday = tzAdjustedMoment(queryForecast(forecast_interval,"timestamp") + 7200).format("$obs.label.time_forecast_date");
                 } else {
-                    var image_url = get_relative_url() + "/images/" + aeris_icon(data[(forecast_interval)][0]["response"][0]["periods"][i]["icon"]) + ".png";
-                    var condition_text = aeris_coded_weather(data[(forecast_interval)][0]["response"][0]["periods"][i]["weatherPrimaryCoded"], false);
-                    var weekday = tzAdjustedMoment(data[(forecast_interval)][0]["response"][0]["periods"][i]["timestamp"]).format("$obs.label.time_forecast_time");
+                    var weekday = tzAdjustedMoment(queryForecast(forecast_interval,"timestamp")).format("$obs.label.time_forecast_time");
                 }
+                var image_url = queryForecast(forecast_interval,"imageUrl");
+                var condition_text = queryForecast(forecast_interval,"conditionText")
 
                 // Determine temperature units
-                if (("$Extras.forecast_units" == "ca") || ("$Extras.forecast_units" == "uk2") || ("$Extras.forecast_units" == "si")) {
-                    avgTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["avgTempC"];
-                    minTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["minTempC"];
-                    maxTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["maxTempC"];
-                    var dewPoint = data[(forecast_interval)][0]["response"][0]["periods"][i]["dewpointC"];
-                } else {
-                    // Default
-                    avgTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["avgTempF"];
-                    minTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["minTempF"];
-                    maxTemp = data[(forecast_interval)][0]["response"][0]["periods"][i]["maxTempF"];
-                    var dewPoint = data[(forecast_interval)][0]["response"][0]["periods"][i]["dewpointF"];
-                }
+                minTemp = queryForecast(forecast_interval, "minTemp");
+                maxTemp = queryForecast(forecast_interval, "maxTemp");
+                avgTemp = queryForecast(forecast_interval, "avgTemp");
+                var dewPoint = queryForecast(forecast_interval, "dewPoint");
 
                 //  for 1hr interval determine temperature range, set to a minimum value of 2; also avoids div by zero
-                if (forecast_interval == "forecast_1hr") {
+                if (forecast_interval in ("forecast_1hr","hourly")) {
                     if (i == 0) {
                         var lowTemp = avgTemp;
                         var highTemp = avgTemp;
@@ -1267,35 +1295,24 @@ function update_forecast_data(data) {
                 }
 
                 // Determine wind units
-                if ("$unit.unit_type.windSpeed" == "knot") {
-                    windSpeed = data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedKTS"];
-                    windGust = data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustKTS"];
-                } else if ("$unit.unit_type.windSpeed" == "beaufort") {
-                    windSpeed = kts_to_beaufort(data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedKTS"]);
-                    windGust = kts_to_beaufort(data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustKTS"]);
-                } else if ("$Extras.forecast_units" == "ca") {
-                    // ca = kph
-                    windSpeed = data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedKPH"];
-                    windGust = data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustKPH"];
-                } else if ("$Extras.forecast_units" == "si") {
-                    // si = meters per second. MPS is KPH / 3.6
-                    windSpeed = data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedKPH"] / 3.6;
-                    windGust = data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustKPH"] / 3.6;
-                } else {
-                    // us and uk2 and default = mph
-                    windSpeed = data[(forecast_interval)][0]["response"][0]["periods"][i]["windSpeedMPH"];
-                    windGust = data[(forecast_interval)][0]["response"][0]["periods"][i]["windGustMPH"];
-                }
+                windSpeed = queryForecast(forecast_interval,"windSpeed");
+                windGust = queryForecast(forecast_interval,"windGust");
 
                 /*
                 As per API specification, "pop" is either a number from 0 to
                 100 or null. We convert to 0 in the second case.
                 */
-                var precip = data[(forecast_interval)][0]["response"][0]["periods"][i]["pop"] || 0;
+                var precip = queryForecast(forecast_interval,"precipProbability");
+
+                #if $Extras.forecast_provider == "weatherflow"
+                var precip_type = queryForecast(forecast_interval,"precipType");
+                var precip_image_url = queryForecast(forecast_interval,"precipImage");
+                #end if
 
                 // Humidity
-                var humidity = data[(forecast_interval)][0]["response"][0]["periods"][i]["humidity"];
+                var humidity = queryForecast(forecast_interval, "humidity");
 
+                #if $Extras.forecast_provider == "aeris"
                 /*
                 Determine snow unit. "snowCM" and "snowIN" are specified
                 to always return a number. We still convert to 0 if we ever get
@@ -1318,7 +1335,9 @@ function update_forecast_data(data) {
                 }
 
                 var forecast_link = '<a href="' + forecast_link_setup + '" target="_blank">$obs.label.daily_forecast</a>';
+                #end if
 
+                #if $Extras.forecast_provider == "aeris"
                 forecast_row.push({
                     "weekday": weekday,
                     "image_url": image_url,
@@ -1335,10 +1354,26 @@ function update_forecast_data(data) {
                     "dewPoint": dewPoint,
                     "forecast_link": forecast_link
                 });
+                #else if $Extras.forecast_provider == "weatherflow"
+                forecast_row.push({
+                    "weekday": weekday,
+                    "image_url": image_url,
+                    "condition_text": condition_text,
+                    "avgTemp": avgTemp,
+                    "minTemp": minTemp,
+                    "maxTemp": maxTemp,
+                    "windSpeed": windSpeed,
+                    "windGust": windGust,
+                    "precip": precip,
+                    "precip_type": precip_type,
+                    "precip_image_url": precip_image_url,
+                    "humidity": humidity,
+                });
+                #end if
             }
 
             //  Create individual forecast rows
-            if (forecast_interval == "forecast_1hr") {
+            if (forecast_interval in ("forecast_1hr", "hourly")) {
                 //  set temperature range and offset to centralise output
                 var rangeTemp = highTemp - lowTemp;
                 var offset = 0;
@@ -1454,13 +1489,13 @@ function update_forecast_data(data) {
             }
 
             // Show the forecasts rows
-            if (forecast_interval == "forecast_1hr") {
+            if (forecast_interval in ("forecast_1hr", "hourly")) {
                 jQuery(".1hr_forecasts").html(output_html);
                 belchertown_debug("html_1hr: " + output_html);
             } else if (forecast_interval == "forecast_3hr") {
                 jQuery(".3hr_forecasts").html(output_html);
                 belchertown_debug("html_3hr: " + output_html);
-            } else if (forecast_interval == "forecast_24hr") {
+            } else if (forecast_interval in ("forecast_24hr", "daily")) {
                 jQuery(".24hr_forecasts").html(output_html);
                 belchertown_debug("html_24hr: " + output_html);
             }
@@ -1470,9 +1505,11 @@ function update_forecast_data(data) {
 
 //	End of new composite version of forecast code
     
+    #if $Extras.forecast_provider == "aeris"
     #if $Extras.has_key("forecast_alert_enabled") and $Extras.forecast_alert_enabled == '1'
         // Show weather alert
         show_forcast_alert(data, forecast_provider);
+    #end if
     #end if
 
     // WX icon in temperature box    
