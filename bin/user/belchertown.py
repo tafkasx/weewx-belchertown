@@ -1056,15 +1056,25 @@ class getData(SearchList):
 
         if (
             self.generator.skin_dict["Extras"]["forecast_enabled"] == "1"
-            and (self.generator.skin_dict["Extras"]["forecast_api_id"] != "" or self.generator.skin_dict["Extras"]["forecast_api_secret"] != "")
+            and (
+                (self.generator.skin_dict["Extras"]["forecast_api_id"] != "" and self.generator.skin_dict["Extras"]["forecast_api_secret"] != "")
+                or (self.generator.skin_dict["Extras"]["forecast_weatherflow_stationid"] != "" and self.generator.skin_dict["Extras"]["forecast_weatherflow_secret"] != "")
+            )
             or "forecast_dev_file" in self.generator.skin_dict["Extras"]
         ):
 
             forecast_file = html_root + "/json/forecast.json"
-            forecast_api_id = self.generator.skin_dict["Extras"]["forecast_api_id"]
-            forecast_api_secret = self.generator.skin_dict["Extras"][
-                "forecast_api_secret"
-            ]
+            
+            if self.generator.skin_dict["Extras"]["forecast_provider"] == "weatherflow":
+                forecast_api_id = self.generator.skin_dict["Extras"]["forecast_weatherflow_stationid"]
+                forecast_api_secret = self.generator.skin_dict["Extras"][
+                    "forecast_weatherflow_secret"
+                ]
+            else:
+                forecast_api_id = self.generator.skin_dict["Extras"]["forecast_api_id"]
+                forecast_api_secret = self.generator.skin_dict["Extras"][
+                    "forecast_api_secret"
+                ]
             
             forecast_units = self.generator.skin_dict["Extras"][
                 "forecast_units"
@@ -1082,9 +1092,7 @@ class getData(SearchList):
             def weatherflow_translate_condition(condition):
                 if condition:
                     key = condition.replace(' ','_').lower()
-                    if label_dict.has_key(key):
-                        return label_dict[key]
-                return ""
+                    return label_dict[key]
                     
             def aeris_coded_weather(data):
                 # https://www.aerisweather.com/support/docs/api/reference/weather-codes/
@@ -1243,14 +1251,14 @@ class getData(SearchList):
                         forecast_api_secret,
                     )
             elif self.generator.skin_dict["Extras"]["forecast_provider"] == "weatherflow":
-                    # forecast_units == "us"
+                    #forecast_units == "us"
                     unit_dist = "mi"
                     unit_temp = "f"
                     unit_pres = "inhg"
                     unit_prec = "in"
                     unit_wind = "mph"
                     
-                    if forecast_units == "si":
+                    if forecast_units != "us":
                         unit_dist = "km"
                         unit_temp = "c"
                         unit_pres = "hpa"
@@ -1261,14 +1269,17 @@ class getData(SearchList):
                         unit_wind = "kph"
                     elif forecast_units == "uk2":
                         unit_wind = "mph"
-
+                    elif forecast_units == "de":
+                        unit_wind = "kts"
+                        unit_prec = "mm"
+                        
                     forecast_weatherflow_url = "https://swd.weatherflow.com/swd/rest/better_forecast?station_id=%s&token=%s&units_temp=%s&units_wind=%s&units_pressure=%s&units_precip=%s&units_distance=%s" % (
-                        forecast_weatherflow_stationid,
-                        forecast_weatherflow_secrect,
+                        forecast_api_id,
+                        forecast_api_secret,
                         unit_temp,
                         unit_wind,
                         unit_pres,
-                        unit_perc,
+                        unit_prec,
                         unit_dist
                     )
 
@@ -1493,6 +1504,9 @@ class getData(SearchList):
                 else:
                     current_obs_summary = ""
                     current_obs_icon = ""
+                visibility = ""
+                visibility_unit = ""
+                cloud_cover = ""
             elif self.generator.skin_dict["Extras"]["forecast_provider"] == "aeris":
                 if (
                     len(data["current"][0]["response"]) > 0

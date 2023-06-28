@@ -1,13 +1,13 @@
 #def isAeris(data)
     #if $Extras.forecast_provider == "aeris"
         $data
-    #endif
+    #end if
 #end def
 
 #def isWF(data)
     #if $Extras.forecast_provider == "weatherflow"
         $data
-    #endif
+    #end if
 #end def
 
 function queryForecast(forecast_interval, key, n = 0) {
