@@ -3,23 +3,27 @@
     <div class="row">
         <div class="col-sm-1 wx-stn-info-current-obs">
             <span class="obs-header-icon">
-                #if $Extras.has_key("forecast_enabled") and $Extras.forecast_enabled == '1' and $current_obs_icon != ""
+            #if $Extras.has_key("forecast_enabled") and $Extras.forecast_enabled == '1' and $current_obs_icon != ""
+                #if $Extras.has_key("forecast_provider") and $Extras.forecast_provider == "weatherflow"
+                <img id="wxicon" src="$current_obs_icon">
+                #else
                 <img id="wxicon" src="$relative_url/images/$current_obs_icon">
                 #end if
+            #end if
             </span>
             <span class="obs-header-outtemp">$current.outTemp</span>
         </div>
         <div class="col-sm-5">
             <div class="wx-stn-name">
-		#if $page == "graphs"
+        #if $page == "graphs"
                 <h1>$obs.label.graphs_page_header</h1>
-		#else if $page == "records"
+        #else if $page == "records"
                 <h1>$obs.label.records_page_header</h1>
-		#else if $page == "reports"
+        #else if $page == "reports"
                 <h1>$obs.label.reports_page_header</h1>
-		#else if $page == "about"
+        #else if $page == "about"
                 <h1>$obs.label.about_page_header</h1>
-		#end if
+        #end if
             </div>
         </div>
         <div class="col-sm-5" style="float:right;">
