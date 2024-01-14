@@ -1225,12 +1225,12 @@ var label_dict = #echo $obs.label #;
   
 function weatherflow_translate_condition(condition) {
 	if ( condition ) {
-		var key = condition.replace(' ','_').toLowerCase();
+		var key = condition.replaceAll(' ','_').toLowerCase();
 		if (key in label_dict) {
 			return label_dict[key];
 		}
 	}
-	return "";
+	return "\u200b";
 }
 
 function show_forcast_alert(data, forecast_provider) {
@@ -1565,15 +1565,7 @@ function update_forecast_data(data) {
 					if (forecast_row[i]["snow_depth"] > 0) {
 						var snow_depth = forecast_row[i]["snow_depth"];
 						var snow_unit = forecast_row[i]["snow_unit"];
-					#else if $Extras.forecast_provider == "weatherflow"
-					if (forecast_row[i]["precip_type"] == "snow") {
-						var snow_depth = forecast_row[i]["precip"];
-						var snow_unit = data["units"]["units_precip"];
-					#else
-					if (0) {
-					#end if
 						output_html += '<div class="snow-precip">';
-						// output_html += '<img src="'+get_relative_url()+'/images/snowflake-icon-15px.png"> <span>';
 						output_html += '<img src="' + get_relative_url() + '/images/snowflake-icon-15px.png"> <span>' + parseFloat(snow_depth).toFixed(0) + '<span> ' + snow_unit;
 						output_html += '</div>';
 					} else if (forecast_row[i]["precip"] > 0) {
@@ -1581,6 +1573,13 @@ function update_forecast_data(data) {
 					} else {
 						output_html += '<i class="wi wi-raindrop wi-rotate-45 rain-no-precip"></i> <span>0%</span>';
 					}
+					#else if $Extras.forecast_provider == "weatherflow"
+					if (forecast_row[i]["precip"] > 0) {
+						output_html += '<span class="forecast-precip-icon"> <span class="precip-icon" style="background-image: url(' + forecast_row[i]["precip_image_url"] + ')"></span><span class="precip-text">' + parseFloat(forecast_row[i]["precip"]).toFixed(0) + '%</span></span>';
+					} else {
+						output_html += '<span class="forecast-precip-icon"> <span class="no-precip-icon" style="background-image: url(' + forecast_row[i]["precip_image_url"] + ')"></span><span class="precip-text">' + parseFloat(forecast_row[i]["precip"]).toFixed(0) + '%</span></span>';
+					}
+					#end if
 					output_html += '</div>';
 					
 					if (forecast_row[i]["windSpeed"]) {
@@ -1627,7 +1626,8 @@ function update_forecast_data(data) {
 					#elif $Extras.has_key("forecast_show_humidity_dewpoint") and $Extras.forecast_show_humidity_dewpoint == '2'
 					output_html += '<i class="wi wi-raindrops rain-precip"></i> <span>' + parseFloat(forecast_row[i]["dewPoint"]).toFixed(0) + '&deg;</span> | ';
 					#end if
-					//TODO: take care of differences for aeris and weatherflow (e.g. WF no percip for daily, but icon))               
+					
+					#if $Extras.forecast_provider == "aeris"
 					if (forecast_row[i]["snow_depth"] > 0) {
 						output_html += '<div class="snow-precip">';
 						output_html += '<img src="' + get_relative_url() + '/images/snowflake-icon-15px.png"> <span>' + parseFloat(forecast_row[i]["snow_depth"]).toFixed(0) + '<span> ' + forecast_row[i]["snow_unit"];
@@ -1637,7 +1637,15 @@ function update_forecast_data(data) {
 					} else {
 						output_html += '<i class="wi wi-raindrop wi-rotate-45 rain-no-precip"></i> <span>0%</span>';
 					}
+					#else if $Extras.forecast_provider == "weatherflow"
+					if (forecast_row[i]["precip"] > 0) {
+						output_html += '<span class="forecast-precip-icon"> <span class="precip-icon" style="background-image: url(' + forecast_row[i]["precip_image_url"] + ')"></span><span class="precip-text">' + parseFloat(forecast_row[i]["precip"]).toFixed(0) + '%</span></span>';
+					} else {
+						output_html += '<span class="forecast-precip-icon"> <span class="no-precip-icon" style="background-image: url(' + forecast_row[i]["precip_image_url"] + ')"></span><span class="precip-text">' + parseFloat(forecast_row[i]["precip"]).toFixed(0) + '%</span></span>';
+					}
+					#end if
 					output_html += '</div>';
+					
 					if (forecast_row[i]["windSpeed"]) {
 						output_html += '<div class="forecast-wind">';
 						output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '</span> | <span> ' + parseFloat(forecast_row[i]["windGust"]).toFixed(0) + '$unit.label.windSpeed';

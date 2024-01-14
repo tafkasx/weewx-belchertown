@@ -1807,14 +1807,21 @@ table.celestial td.label {
     cursor: pointer;
 }
 
-
 .forecast-conditions {
-	min-height:160px;
+	min-height:70px;
     word-wrap:break-word;
 }
 
+.forecast-conditions img{
+	max-height:80px !important;
+}
+
+.forecast-condition-text {
+	min-height:20px;
+}
+
 .forecast-image {
-	height:50px;
+	max-height:60px;
 }
 
 .forecast-conditions-1hour {
@@ -1830,11 +1837,32 @@ table.celestial td.label {
 .forecast-temp-graph {
 	font-size:20px;
 	font-weight:250;
-    height: 179px;   /* 179 critical to align 1, 3 & 24hr forecasts */
+    height: 200px;   /* 179 critical to align 1, 3 & 24hr forecasts */
 }
 
 .forecast-precip, .forecast-wind {
 	font-size:15px;
+}
+
+.forecast-precip-icon {
+	min-height: 25px;
+	min-width: 25px;
+}
+
+.precip-icon {
+	padding: 0 0 0 18px;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+	background-size: 15px auto;
+	/* filter: black --> #42b5e7;) */
+    filter: invert(69%) sepia(10%) saturate(3527%) hue-rotate(167deg) brightness(96%) contrast(89%);
+}
+
+.no-precip-icon {
+	padding: 0 0 0 18px;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+	background-size: 15px auto;
 }
 
 .snow-precip, .rain-precip {
@@ -1989,7 +2017,7 @@ table.celestial td.label {
 
 .forecast-3hour {
     position: relative;
-    min-height: 270px;
+    min-height: 190px;
     padding-left: 10px;
     padding-right: 10px;
     display: inline-block;
@@ -1999,9 +2027,11 @@ table.celestial td.label {
 
 .forecast-24hour {
     position: relative;
-    min-height: 270px;
+    min-height: 190px;
     padding-left: 10px;
     padding-right: 10px;
+    padding-bottom: 10px;
+    padding-top: 10px
     display: inline-block;
     width: 165px;
 }
@@ -2236,12 +2266,12 @@ input:checked + .slider:before {
         
 	.forecast-temp-graph {
         padding-top: 0px !important;
-        height: 75px !important;
+        height: 95px !important;
 	}
     
 	.forecast-temp-graph img {
 		width: 50% !important;
-        height: auto;
+        max-height: 60px; !important
 	}
     
 	.forecast-condition-text {
@@ -2259,12 +2289,13 @@ input:checked + .slider:before {
 	}
         
     .forecast-conditions {
-        min-height: 90px;
+        min-height: 70px;
     }
     
     .forecast-conditions img {
-        width:30%;
-        height:auto;
+        width: 30%;
+        height: auto;
+		max-height: 60px !important
     }
 	
 	.earthquake-container {
