@@ -2086,37 +2086,101 @@ function update_current_wx(data) {
 		jQuery(".curwindspeed").html(parseFloat(parseFloat(data["windSpeed_knot"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
 	}
 
-	// Beaufort
+	// Beaufort for non-weatherflow
 	#if $Extras.has_key("beaufort_category") and $Extras.beaufort_category == '1'
+	#if $Extras.forecast_provider != "weatherflow"
 	if (data.hasOwnProperty("beaufort")) {
 		jQuery(".beaufort").html(beaufort_cat(parseFloat(data["beaufort"])));
 	}
-	else if (data.hasOwnProperty("beaufort_count")) {
+	else if (data.hasOwnProperty("beaufort_count") {
 		jQuery(".beaufort").html(beaufort_cat(parseFloat(data["beaufort_count"])));
 	}
+	#else
+	//in windspeed is always send in conjunction with beaufort_count,
+	//in case we are not using knots, we go with the beaufort_count value
+	if (!data.hasOwnProperty("windSpeed_knot") && data.hasOwnProperty("beaufort_count")) {
+		jQuery(".beaufort").html(beaufort_cat(parseFloat(data["beaufort_count"])));
+	}
+	//in case we have average wind speed in knots from weatherflow, we calc the beaufort string from it
+	else if (data.hasOwnProperty("windAvg_knot")) {
+		jQuery(".beaufort").html(beaufort_cat(kts_to_beaufort(parseFloat(data["windAvg_knot"]))));
+	}
+	#end if
 	#end if
 
 	// Wind Gust US
 	// May not be provided in mqtt, but just in case.
+	#if $Extras.forecast_provider == "aeris"
 	if (data.hasOwnProperty("windGust_mph")) {
 		jQuery(".curwindgust").html(parseFloat(parseFloat(data["windGust_mph"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]}));
 	}
 	// Wind Gust Metric
-	if (data.hasOwnProperty("windGust_kph")) {
+	else if (data.hasOwnProperty("windGust_kph")) {
 		jQuery(".curwindgust").html(parseFloat(parseFloat(data["windGust_kph"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]}));
 	}
 	// Wind Gust METRICWX
-	if (data.hasOwnProperty("windGust_mps")) {
+	else if (data.hasOwnProperty("windGust_mps")) {
 		jQuery(".curwindgust").html(parseFloat(parseFloat(data["windGust_mps"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]}));
 	}
 	// Wind Gust Beaufort
-	if (data.hasOwnProperty("windGust_beaufort")) {
+	else if (data.hasOwnProperty("windGust_beaufort")) {
 		jQuery(".curwindgust").html(parseFloat(parseFloat(data["windGust_beaufort"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
 	}
 	// Windspeed knots
-	if (data.hasOwnProperty("windGust_knot")) {
+	else if (data.hasOwnProperty("windGust_knot")) {
 		jQuery(".curwindgust").html(parseFloat(parseFloat(data["windGust_knot"])).toLocaleString("$system_locale_js", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}	
+	#else if $Extras.forecast_provider == "weatherflow"
+	if (data.hasOwnProperty("windGust_mph")) {
+		gust = parseFloat(parseFloat(data["windGust_mph"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		lull = parseFloat(parseFloat(data["windLull_mph"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		jQuery(".curwindgust").html(lull + "&#8239;-&#8239;" + gust);
 	}
+	// Wind Gust Metric
+	else if (data.hasOwnProperty("windGust_kph")) {
+		gust = parseFloat(parseFloat(data["windGust_kph"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		lull = parseFloat(parseFloat(data["windLull_kph"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		jQuery(".curwindgust").html(lull + "&#8239;-&#8239;" + gust);
+	}
+	// Wind Gust METRICWX
+	else if (data.hasOwnProperty("windGust_mps")) {
+		gust = parseFloat(parseFloat(data["windGust_mps"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		lull = parseFloat(parseFloat(data["windLull_mps"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		jQuery(".curwindgust").html(lull + "&hairsp;-&hairsp;" + gust);
+	}
+	// Wind Gust Beaufort
+	else if (data.hasOwnProperty("windGust_beaufort")) {
+		gust = parseFloat(parseFloat(data["windGust_beaufort"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		lull = parseFloat(parseFloat(data["windLull_beaufort"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		jQuery(".curwindgust").html(lull + "&#8239;-&#8239;" + gust);
+	}
+	// Windspeed knots
+	else if (data.hasOwnProperty("windGust_knot")) {
+		gust = parseFloat(parseFloat(data["windGust_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		lull = parseFloat(parseFloat(data["windLull_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windGust"], maximumFractionDigits: unit_rounding_array["windGust"]});
+		jQuery(".curwindgust").html(lull + "&#8239;-&#8239;" + gust);
+	}
+	#end if
+	
+	#if $Extras.forecast_provider == "weatherflow"
+	//Weatherflow reports windaverage every minute.
+	if (data.hasOwnProperty("windAvg_mph")) {
+		jQuery(".curwindavg").html(parseFloat(parseFloat(data["windAvg_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}
+	else if (data.hasOwnProperty("windAvg_kph")) {
+		jQuery(".curwindavg").html(parseFloat(parseFloat(data["windAvg_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}
+	else if (data.hasOwnProperty("windAvg_mps")) {
+		jQuery(".curwindavg").html(parseFloat(parseFloat(data["windAvg_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}
+	else if (data.hasOwnProperty("windAvg_beaufort")) {
+		jQuery(".curwindavg").html(parseFloat(parseFloat(data["windAvg_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}
+	else if (data.hasOwnProperty("windAvg_knot")) {
+		jQuery(".curwindavg").html(parseFloat(parseFloat(data["windAvg_knot"])).toLocaleString("de-DE", {minimumFractionDigits: unit_rounding_array["windSpeed"], maximumFractionDigits: unit_rounding_array["windSpeed"]}));
+	}
+	#end if
+	
 
 	// Windchill US
 	if (data.hasOwnProperty("windchill")) {

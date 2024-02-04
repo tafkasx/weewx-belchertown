@@ -45,7 +45,11 @@
                 #if $Extras.has_key("beaufort_category") and $Extras.beaufort_category == '1'
                 // weewx >= 4.2 can convert to Beaufort directly, but to improve backwards compatibility, convert windSpeed to
                 // knots and then use Javascript function to convert to Beaufort
+				#if $Extras.forecast_provider != "weatherflow"
                 jQuery(".beaufort").html( beaufort_cat( kts_to_beaufort( "$current.windSpeed.knot.toString(addLabel=False)" ) ) );
+				#else
+				jQuery(".beaufort").html( beaufort_cat( kts_to_beaufort( "$current.windAvg.knot.toString(addLabel=False)" ) ) );
+				#end if
                 #end if
 
                 get_outTemp_color( "$unit.unit_type.outTemp", "$current.outTemp.formatted" );
@@ -301,14 +305,26 @@
                                                             $current.windSpeed.toString(addLabel=False, NONE_string="--")
                                                         </span>
                                                     </td>
-                                                    <td class="border-left gust">&nbsp;
+                                                    <td class="border-left gust">
                                                         <span class="curwindgust">
-                                                            $current.windGust.toString(addLabel=False, NONE_string="--")
+                                                            #if $current.windGust.toString(addLabel=False, NONE_string="--") == "--"
+																<span>--</span>
+															#else if $Extras.forecast_provider == "weatherflow"
+																<span>$current.windLull.format(add_label=False, None_string="?")&hairsp;-&hairsp;$current.windGust.format(add_label=False, None_string="?")</span>
+															#else
+																<span>$current.windGust.toString(addLabel=False, NONE_string="--")</span>
+															#end if
                                                         </span>
                                                     </td>
                                                 </tr>
-                                                <tr>
-                                                    <td class="mph" colspan="3">$unit.label.windSpeed</td>
+                                                <tr>                                                  
+													#if $Extras.forecast_provider == "weatherflow"
+													<td class="mph" colspan="3">
+														&#8960;&nbsp;<span class="curwindavg">$current.windAvg.toString(addLabel=False, NONE_string="--")</span>$unit.label.windSpeed
+													</td>
+													#else
+													<td class="mph" colspan="3">$unit.label.windSpeed</td>
+													#end if
                                                 </tr>
                                                 #if $Extras.has_key("beaufort_category") and $Extras.beaufort_category == '1'
                                                 <tr>

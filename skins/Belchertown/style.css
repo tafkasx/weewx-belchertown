@@ -1545,7 +1545,7 @@ p.entry-meta {
 }
 
 .windspeedtable {
-    padding-top:10px;
+    padding-top: 0px;
 }
 
 .wind-arrow-container {
@@ -1647,9 +1647,24 @@ p.entry-meta {
 	font-size:20px;
 }
 
-.curwindspeed, .curwindgust {
+.curwindspeed {
 	font-size:30px;
 }
+
+.curwindgust {
+	font-size:24px;
+	white-space: nowrap;
+}
+
+/*.curwindspeed, .curwindgust {
+	font-size:30px;
+}
+
+@media only screen and (min-width: 1197px) {
+	.curwindgust {
+		font-size:24px;
+	}
+}*/
 
 .mph { 
 	padding-top:10px !important;
@@ -1659,6 +1674,7 @@ p.entry-meta {
 .wind-table .beaufort { 
 	padding-top:8px;
 	font-size:18px;
+	white-space: nowrap;
 }
 
 .wx-pressure-trend { 
@@ -2205,6 +2221,7 @@ input:checked + .slider:before {
 	
 	.wind-table { 
 		/* margin-top:15px !important; */
+		max-width: min-content;
 	}
     
     .wind-table td {
@@ -2214,6 +2231,8 @@ input:checked + .slider:before {
     .windspeedtable {
         /* float:left; */
         float:right;
+		padding-left: 5px;
+		padding-right: 10px;
     }
     
     .current_wind {
