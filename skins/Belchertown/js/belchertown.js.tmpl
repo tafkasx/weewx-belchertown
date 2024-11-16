@@ -1582,10 +1582,10 @@ function update_forecast_data(data) {
 					#end if
 					output_html += '</div>';
 					
-					if (forecast_row[i]["windSpeed"]) {
+					if (forecast_row[i]["windSpeed"] != undefined) {
 						output_html += '<div class="forecast-wind">';
-						output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '</span>';
-						//  output_html += '<i class="wi wi-strong-wind"></i> <span>'+ parseFloat( forecast_row[i]["windSpeed"] ).toFixed(0) +'</span> | <span> '+ parseFloat( forecast_row[i]["windGust"] ).toFixed(0) +'$unit.label.windSpeed';        
+						output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '$unit.label.windSpeed </span>';
+						//  output_html += '<i class="wi wi-strong-wind"></i> <span>'+ parseFloat( forecast_row[i]["windSpeed"] ).toFixed(0) +'</span> | <span> '+ parseFloat( forecast_row[i]["windGust"] ).toFixed(0) +'$unit.label.windSpeed </span>';        
 						output_html += '</div>';
 					}
 					
@@ -1646,7 +1646,7 @@ function update_forecast_data(data) {
 					#end if
 					output_html += '</div>';
 					
-					if (forecast_row[i]["windSpeed"]) {
+					if (forecast_row[i]["windSpeed"] != undefined) {
 						output_html += '<div class="forecast-wind">';
 						output_html += '<i class="wi wi-strong-wind"></i> <span>' + parseFloat(forecast_row[i]["windSpeed"]).toFixed(0) + '</span> | <span> ' + parseFloat(forecast_row[i]["windGust"]).toFixed(0) + '$unit.label.windSpeed';
 						output_html += '</div>';
